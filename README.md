@@ -43,7 +43,7 @@ that only you hold, which your server checks before deploying.
 1. Add the gem, and Solid Errors if the app doesn’t have it yet:
 
    ```ruby
-   gem "midnight_ride", github: "dchacke/midnight_ride"
+   gem "midnight_ride"
    ```
 
 2. Create a Telegram bot with [@BotFather](https://t.me/BotFather) and send
