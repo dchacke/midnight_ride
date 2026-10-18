@@ -30,6 +30,14 @@ it’s sent. Even so, an error message can hold text an attacker chose, so
 keep a person between the session and production: review its pull requests
 before they’re merged.
 
+Reviewing only helps if a session can’t skip it. Claude Code sessions reach
+GitHub as you, so branch protection can’t tell them apart from you: a
+session tricked by an error message could push to the branch you deploy
+from, or merge its own pull request. So don’t let anything a session can do
+reach production by itself. Make deploys need something only you can
+produce, such as a deploy you start yourself, or a tag signed with a key
+that only you hold, which your server checks before deploying.
+
 ## Setup
 
 1. Add the gem, and Solid Errors if the app doesn’t have it yet:
