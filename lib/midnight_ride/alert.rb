@@ -4,7 +4,8 @@ module MidnightRide
   #
   # Solid Errors tells errors apart by their whole message, so one with ids
   # in its message is a new error each time. Errors are told apart here
-  # without their numbers, and by where in the app they happened.
+  # without their numbers or the values they quote, and by where in the app
+  # they happened.
   #
   # Only the error's class, message and backtrace leave the app, never its
   # context (params and the like): people other than you write those, and
@@ -74,7 +75,7 @@ module MidnightRide
     private
 
     def key
-      @key ||= "midnight_ride/#{Digest::SHA256.hexdigest([exception_class, without_numbers(message), without_numbers(location)].join("\n"))}"
+      @key ||= "midnight_ride/#{Digest::SHA256.hexdigest([exception_class, without_values(message), without_numbers(location)].join("\n"))}"
     end
 
     def seen?
@@ -107,6 +108,15 @@ module MidnightRide
 
     def without_numbers text
       text.gsub(/\h*\d\h*/, "#")
+    end
+
+    # Ruby quotes the values an error is about in double quotes, as
+    # String#inspect does, like the address in a URI::InvalidURIError, and
+    # those come from whoever made the request, so one problem can quote
+    # many. Names in the code, like a missing method's, are in single
+    # quotes and still tell errors apart.
+    def without_values text
+      without_numbers(text.gsub(/"(?:[^"\\]|\\.)*"/, '"…"'))
     end
 
     def url

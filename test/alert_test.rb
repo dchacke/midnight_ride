@@ -73,6 +73,20 @@ class AlertTest < Minitest::Test
     assert_equal 1, @messages.size
   end
 
+  def test_an_error_like_one_alerted_about_but_for_other_values_it_quotes_is_left_alone
+    alert(id: 1, exception_class: "URI::InvalidURIError", message: 'bad URI (is not URI?): "https://example.com/ideas/12-one-slug/revisions/["').deliver
+    alert(id: 2, exception_class: "URI::InvalidURIError", message: 'bad URI (is not URI?): "https://example.com/ideas/34-\\"other\\"-slug/revisions/["').deliver
+
+    assert_equal 1, @sessions.size
+  end
+
+  def test_an_error_about_another_name_in_the_code_is_alerted_about
+    alert(id: 1, message: "undefined method 'name' for nil").deliver
+    alert(id: 2, message: "undefined method 'title' for nil").deliver
+
+    assert_equal 2, @sessions.size
+  end
+
   def test_an_error_from_somewhere_else_in_the_code_is_alerted_about
     alert(id: 1, message: "oops").deliver
     alert(id: 2, message: "oops", backtrace: "#{ROOT}/app/models/user.rb:3:in 'User#name'").deliver

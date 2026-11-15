@@ -14,8 +14,9 @@ which records the errors. Midnight Ride speaks up for:
 
 Solid Errors tells errors apart by their whole message, so an error with ids
 in its message is a new error every time. Midnight Ride tells them apart
-without their numbers, and by where in the app they happened, so you hear
-about each problem once.
+without their numbers or the values they quote in double quotes (like a bad
+address someone requested), and by where in the app they happened, so you
+hear about each problem once.
 
 Each alert starts a Claude Code session through a
 [routine’s API trigger](https://code.claude.com/docs/en/routines), at most
