@@ -87,6 +87,28 @@ class AlertTest < Minitest::Test
     assert_equal 2, @sessions.size
   end
 
+  def test_errors_that_count_as_one_are_alike
+    alerts = [
+      alert(id: 1, message: 'bad URI: "/ideas/12-one/["'),
+      alert(id: 2, message: 'bad URI: "/ideas/34-two/["'),
+      alert(id: 3, message: "oops")
+    ]
+
+    assert_equal [1, 2], MidnightRide::Alert.alike(alerts, [2])
+    assert_equal [3], MidnightRide::Alert.alike(alerts, [3])
+    assert_empty MidnightRide::Alert.alike(alerts, [4])
+  end
+
+  def test_errors_that_count_as_one_get_one_reminder_with_how_often_they_all_happened
+    reminders = MidnightRide::Alert.reminders([
+      alert(id: 2, message: 'bad URI: "/ideas/34-two/["', still_happening: 3),
+      alert(id: 1, message: 'bad URI: "/ideas/12-one/["', still_happening: 4),
+      alert(id: 3, message: "oops", still_happening: 1)
+    ])
+
+    assert_equal [[1, 7], [3, 1]], reminders.map { [it.id, it.still_happening] }.sort
+  end
+
   def test_an_error_from_somewhere_else_in_the_code_is_alerted_about
     alert(id: 1, message: "oops").deliver
     alert(id: 2, message: "oops", backtrace: "#{ROOT}/app/models/user.rb:3:in 'User#name'").deliver

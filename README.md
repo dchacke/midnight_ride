@@ -123,7 +123,9 @@ MidnightRide.resolve(ids)
 ```
 
 for instance with `bin/rails runner 'MidnightRide.resolve(ARGV)' 90 91`.
-Errors that haven’t happened for a week resolve themselves anyway.
+It also resolves the errors that count as one with those, which no commit
+names, since only one of them was alerted about. Errors that haven’t
+happened for a week resolve themselves anyway.
 
 ## License
 

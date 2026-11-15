@@ -59,11 +59,16 @@ module MidnightRide
       (@root || Rails.root).to_s
     end
 
-    # Resolves the Solid Errors errors with the given ids, so they alert
-    # again if they come back. For the server's deploys, which resolve the
-    # errors the deployed commits name (see the README).
+    # Resolves the Solid Errors errors with the given ids, and the unresolved
+    # ones that count as one with them, which no commit names, since only
+    # one of them was alerted about. They alert again if they come back. For
+    # the server's deploys, which resolve the errors the deployed commits
+    # name (see the README).
     def resolve ids
-      SolidErrors::Error.unresolved.where(id: ids).update_all(resolved_at: Time.current)
+      ids = ids.map(&:to_i)
+      unresolved = SolidErrors::Error.unresolved.to_a
+      alike = Alert.alike(unresolved.map { alert_for(it) }, ids)
+      SolidErrors::Error.unresolved.where(id: ids | alike).update_all(resolved_at: Time.current)
     end
   end
 

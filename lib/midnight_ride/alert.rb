@@ -72,11 +72,29 @@ module MidnightRide
       Net::HTTP.post(URI(url), body.to_json, {"Content-Type" => "application/json"}.merge(headers))
     end
 
-    private
-
+    # Errors with the same key count as one: each alerts once, and resolving
+    # one resolves them all.
     def key
       @key ||= "midnight_ride/#{Digest::SHA256.hexdigest([exception_class, without_values(message), without_numbers(location)].join("\n"))}"
     end
+
+    # The ids of the alerts that count as one with an alert of the given ids
+    def self.alike alerts, ids
+      keys = alerts.select { ids.include?(it.id) }.map(&:key)
+      alerts.select { keys.include?(it.key) }.map(&:id)
+    end
+
+    # One alert for each group of alerts that count as one, the oldest's,
+    # with how often they all happened
+    def self.reminders alerts
+      alerts.group_by(&:key).values.map do |group|
+        first = group.min_by(&:id)
+        new(id: first.id, exception_class: first.exception_class, message: first.message,
+          backtrace: first.backtrace, still_happening: group.sum { it.still_happening.to_i })
+      end
+    end
+
+    private
 
     def seen?
       MidnightRide.cache.exist?(key)

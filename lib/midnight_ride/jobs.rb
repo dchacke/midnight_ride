@@ -17,17 +17,20 @@ module MidnightRide
   end
 
   # Once a day, alerts again about each unresolved error that still happened
-  # in the last day, with how often, and starts another session for it.
-  # Errors new in the last day were alerted about already.
+  # in the last day, with how often, and starts another session for it,
+  # once for errors that count as one. Errors new in the last day were
+  # alerted about already.
   class RemindersJob < ActiveJob::Base
     def perform
       since = 1.day.ago
       counts = SolidErrors::Occurrence.where(created_at: since..).group(:error_id).count
+      errors = SolidErrors::Error.unresolved.where(id: counts.keys, created_at: ...since)
+      alerts = errors.map { MidnightRide.alert_for(it, still_happening: counts[it.id]) }
 
-      SolidErrors::Error.unresolved.where(id: counts.keys, created_at: ...since).find_each do |error|
-        MidnightRide.alert(error, still_happening: counts[error.id])
+      Alert.reminders(alerts).each do |alert|
+        alert.deliver
       rescue => e
-        MidnightRide.logger.error("MidnightRide::RemindersJob failed for error #{error.id}: #{e.class}: #{e.message}")
+        MidnightRide.logger.error("MidnightRide::RemindersJob failed for error #{alert.id}: #{e.class}: #{e.message}")
       end
     end
   end
@@ -43,12 +46,16 @@ module MidnightRide
   end
 
   def self.alert error, **options
+    alert_for(error, **options).deliver
+  end
+
+  def self.alert_for error, **options
     Alert.new(
       id: error.id,
       exception_class: error.exception_class,
       message: error.message,
       backtrace: error.occurrences.order(:id).last&.backtrace,
       **options
-    ).deliver
+    )
   end
 end
